@@ -483,6 +483,4 @@ $RECYCLE.BIN/
 
 /.superpowers/
 /publish/
-# Runtime output written next to the exe (bin folders are ignored above)
-/src/LabelBridge/jobs/
-/src/LabelBridge/logs/
+# Runtime output (jobs/, logs/) is written next to the exe under bin/, ignored above.
