@@ -85,9 +85,10 @@ the real printer and iPhone.
 | `IppPort` | `631` | Port the iPhone prints to (keep 631 for AirPrint) |
 | `Output` | `tspl` | `tspl` = raw to printer port; `windows-driver` = via the installed Xprinter driver; `file` = PNG files only |
 | `PrinterHost` / `PrinterPort` | `192.168.1.100` / `9100` | Printer address for `tspl` |
-| `ConnectTimeoutMs` | `5000` | How long to wait for the printer before failing the job |
+| `ConnectTimeoutMs` | `5000` | How long to wait for the printer to answer before failing the job |
+| `WriteTimeoutMs` | `30000` | How long a job may take to send (e.g. printer out of paper) before it fails |
 | `WindowsPrinterName` | `Xprinter XP-470B` | Printer name for `windows-driver` |
-| `SaveJobs` | `false` | `true` saves each received page and final label as PNG in `jobs\` |
+| `SaveJobs` | `false` | `true` saves each received page and final label as PNG in `jobs\`, and logs every IPP request/response in detail |
 | `OutputDirectory` | `jobs` | Folder for `SaveJobs` and `file` output |
 | `AdvertisedResolutions` | `[203, 300]` | Resolutions offered to the iPhone (pages are resampled to 203 dpi) |
 | `Label.WidthMm` / `HeightMm` | `100` / `150` | Sticker size |

@@ -60,7 +60,7 @@ public static class AppBuilder
         return app;
     }
 
-    static async Task<IResult> HandleIpp(HttpContext ctx, IppOperations ops, ILogger<IppOperations> log)
+    static async Task<IResult> HandleIpp(HttpContext ctx, IppOperations ops, BridgeOptions o, ILogger<IppOperations> log)
     {
         var body = new MemoryStream();
         await ctx.Request.Body.CopyToAsync(body, ctx.RequestAborted);
@@ -83,6 +83,9 @@ public static class AppBuilder
         log.LogInformation("IPP op 0x{Op:X4} request {RequestId} from {Remote} → status 0x{Status:X4}{Job}",
             request.Code, request.RequestId, ctx.Connection.RemoteIpAddress, response.Code,
             jobId is null ? "" : $" job {jobId}");
+        if (o.SaveJobs)
+            log.LogInformation("IPP request:\n{Request}\nIPP response:\n{Response}",
+                IppDump.Format(request), IppDump.Format(response, isResponse: true));
         return Results.Bytes(IppWriter.Write(response), "application/ipp");
     }
 
