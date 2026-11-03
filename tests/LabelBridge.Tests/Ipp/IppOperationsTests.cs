@@ -155,6 +155,27 @@ public class IppOperationsTests
     }
 
     [Fact]
+    public void Response_EchoesRequestVersion()
+    {
+        var req = Request(IppOp.GetPrinterAttributes);
+        req.VersionMajor = 1;
+        req.VersionMinor = 1;
+
+        var resp = _ops.Handle(req, Stream.Null, Uri);
+
+        Assert.Equal((1, 1), (resp.VersionMajor, resp.VersionMinor));
+    }
+
+    [Fact]
+    public void GetPrinterAttributes_HasLocationAndMoreInfo()
+    {
+        var p = Printer(_ops.Handle(Request(IppOp.GetPrinterAttributes), Stream.Null, Uri));
+
+        Assert.NotNull(p.Find("printer-location"));
+        Assert.Equal("http://localhost:631/", Values(p, "printer-more-info").Single());
+    }
+
+    [Fact]
     public void UnknownOperation_NotSupported()
     {
         Assert.Equal(IppStatus.OperationNotSupported, _ops.Handle(Request(0x003C), Stream.Null, Uri).Code);

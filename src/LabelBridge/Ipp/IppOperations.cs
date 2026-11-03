@@ -9,7 +9,12 @@ public sealed class IppOperations(
 {
     public IppMessage Handle(IppMessage request, Stream documentData, string printerUri)
     {
-        var resp = new IppMessage { RequestId = request.RequestId };
+        var resp = new IppMessage
+        {
+            RequestId = request.RequestId,
+            VersionMajor = request.VersionMajor,
+            VersionMinor = request.VersionMinor,
+        };
         var op = resp.Group(IppTag.OperationAttributes);
         op.Attributes.Add(new IppAttribute("attributes-charset", new IppValue(IppTag.Charset, "utf-8")));
         op.Attributes.Add(new IppAttribute("attributes-natural-language", new IppValue(IppTag.NaturalLanguage, "en")));

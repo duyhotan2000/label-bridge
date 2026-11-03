@@ -37,6 +37,9 @@ public static class PrinterAttributes
         Add("printer-info", IppTag.TextWithoutLanguage, o.PrinterName);
         Add("printer-make-and-model", IppTag.TextWithoutLanguage, "Xprinter XP-470B (LabelBridge)");
         Add("printer-uuid", IppTag.Uri, $"urn:uuid:{uuid}");
+        Add("printer-location", IppTag.TextWithoutLanguage, "");
+        var web = new UriBuilder(printerUri) { Scheme = "http", Path = "/" };
+        Add("printer-more-info", IppTag.Uri, web.Uri.ToString());
 
         var queued = store.All().Count(j => !j.IsFinished);
         Add("printer-state", IppTag.Enum, store.IsBusy ? 4 : 3);
