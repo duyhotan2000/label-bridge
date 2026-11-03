@@ -481,7 +481,8 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-.superpowers/
-jobs/
-publish/
-logs/
+/.superpowers/
+/publish/
+# Runtime output written next to the exe (bin folders are ignored above)
+/src/LabelBridge/jobs/
+/src/LabelBridge/logs/
