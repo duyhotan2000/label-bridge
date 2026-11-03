@@ -37,6 +37,7 @@ public static class PrinterAttributes
         Add("printer-info", IppTag.TextWithoutLanguage, o.PrinterName);
         Add("printer-make-and-model", IppTag.TextWithoutLanguage, "Xprinter XP-470B (LabelBridge)");
         Add("printer-uuid", IppTag.Uri, $"urn:uuid:{uuid}");
+        Add("printer-dns-sd-name", IppTag.NameWithoutLanguage, o.PrinterName);
         Add("printer-location", IppTag.TextWithoutLanguage, "");
         var web = new UriBuilder(printerUri) { Scheme = "http", Path = "/" };
         Add("printer-more-info", IppTag.Uri, web.Uri.ToString());
@@ -69,6 +70,9 @@ public static class PrinterAttributes
         Add("sides-default", IppTag.Keyword, "one-sided");
         Add("orientation-requested-supported", IppTag.Enum, 3);
         Add("orientation-requested-default", IppTag.Enum, 3);
+        // Ask iOS to render the A6 page 1:1; LabelMapper places it on the label.
+        Add("print-scaling-supported", IppTag.Keyword, "none", "fit", "auto");
+        Add("print-scaling-default", IppTag.Keyword, "none");
         Add("print-quality-supported", IppTag.Enum, 4);
         Add("print-quality-default", IppTag.Enum, 4);
 
@@ -80,6 +84,7 @@ public static class PrinterAttributes
         Add("media-col-database", IppTag.BegCollection, MediaCol(o));
         foreach (var side in new[] { "bottom", "left", "right", "top" })
             Add($"media-{side}-margin-supported", IppTag.Integer, 0);
+        Add("media-size-supported", IppTag.BegCollection, MediaSize(o));
         Add("media-source-supported", IppTag.Keyword, "main");
         Add("media-type-supported", IppTag.Keyword, "labels");
 
@@ -88,14 +93,15 @@ public static class PrinterAttributes
         return g;
     }
 
+    static IppCollection MediaSize(BridgeOptions o) =>
+    [
+        new("x-dimension", new IppValue(IppTag.Integer, o.Media.WidthHundredthsMm)),
+        new("y-dimension", new IppValue(IppTag.Integer, o.Media.HeightHundredthsMm)),
+    ];
+
     static IppCollection MediaCol(BridgeOptions o)
     {
-        var size = new IppCollection
-        {
-            new("x-dimension", new IppValue(IppTag.Integer, o.Media.WidthHundredthsMm)),
-            new("y-dimension", new IppValue(IppTag.Integer, o.Media.HeightHundredthsMm)),
-        };
-        var col = new IppCollection { new("media-size", new IppValue(IppTag.BegCollection, size)) };
+        var col = new IppCollection { new("media-size", new IppValue(IppTag.BegCollection, MediaSize(o))) };
         foreach (var side in new[] { "bottom", "left", "right", "top" })
             col.Add(new IppAttribute($"media-{side}-margin", new IppValue(IppTag.Integer, 0)));
         col.Add(new IppAttribute("media-source", new IppValue(IppTag.Keyword, "main")));

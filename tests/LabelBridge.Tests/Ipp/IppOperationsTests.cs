@@ -176,6 +176,19 @@ public class IppOperationsTests
     }
 
     [Fact]
+    public void GetPrinterAttributes_HasMediaSizeScalingAndDnsSdName()
+    {
+        var p = Printer(_ops.Handle(Request(IppOp.GetPrinterAttributes), Stream.Null, Uri));
+
+        var size = Assert.IsType<IppCollection>(Values(p, "media-size-supported").Single());
+        Assert.Equal(10500, size.Single(a => a.Name == "x-dimension").Values[0].Value);
+        Assert.Equal(14800, size.Single(a => a.Name == "y-dimension").Values[0].Value);
+        Assert.Equal("none", Values(p, "print-scaling-default").Single());
+        Assert.Contains("none", Values(p, "print-scaling-supported"));
+        Assert.Equal("XP-470B Label", Values(p, "printer-dns-sd-name").Single());
+    }
+
+    [Fact]
     public void UnknownOperation_NotSupported()
     {
         Assert.Equal(IppStatus.OperationNotSupported, _ops.Handle(Request(0x003C), Stream.Null, Uri).Code);
