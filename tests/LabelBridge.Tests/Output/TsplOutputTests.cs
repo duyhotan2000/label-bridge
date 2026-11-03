@@ -43,4 +43,22 @@ public class TsplOutputTests
 
         Assert.True(sw.Elapsed < TimeSpan.FromSeconds(2), $"took {sw.Elapsed}");
     }
+
+    [Fact]
+    public async Task TsplOutput_PrinterStopsReading_ThrowsWithinWriteTimeout()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var accepted = listener.AcceptTcpClientAsync(); // accepts, never reads
+        var o = new BridgeOptions { PrinterHost = "127.0.0.1", PrinterPort = port, WriteTimeoutMs = 1000 };
+        var big = Enumerable.Range(0, 60).Select(_ => new MonoBitmap(800, 1200, new byte[100 * 1200])).ToList();
+        var sw = Stopwatch.StartNew();
+
+        await Assert.ThrowsAsync<IOException>(() => new TsplOutput(o).PrintAsync(big, "job-1", CancellationToken.None));
+
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"took {sw.Elapsed}");
+        (await accepted).Dispose();
+        listener.Stop();
+    }
 }

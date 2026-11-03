@@ -23,9 +23,20 @@ public sealed class TsplOutput(BridgeOptions o) : ILabelOutput
                 throw new IOException($"Printer {o.PrinterHost}:{o.PrinterPort} did not answer within {o.ConnectTimeoutMs} ms");
             }
         }
-        var stream = client.GetStream();
-        await stream.WriteAsync(data, ct);
-        await stream.FlushAsync(ct);
-        client.Client.Shutdown(SocketShutdown.Send);
+        // A printer that accepts the connection but stops reading (paper out, head open)
+        // must not block the queue forever.
+        using var write = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        write.CancelAfter(o.WriteTimeoutMs);
+        try
+        {
+            var stream = client.GetStream();
+            await stream.WriteAsync(data, write.Token);
+            await stream.FlushAsync(write.Token);
+            client.Client.Shutdown(SocketShutdown.Send);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new IOException($"Printer {o.PrinterHost}:{o.PrinterPort} stopped accepting data (timeout {o.WriteTimeoutMs} ms)");
+        }
     }
 }

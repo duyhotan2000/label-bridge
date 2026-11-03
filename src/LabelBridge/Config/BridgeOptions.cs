@@ -11,6 +11,8 @@ public sealed class BridgeOptions
     public string PrinterHost { get; set; } = "192.168.1.100";
     public int PrinterPort { get; set; } = 9100;
     public int ConnectTimeoutMs { get; set; } = 5000;
+    /// <summary>Max time to send one job to the printer before the job is aborted.</summary>
+    public int WriteTimeoutMs { get; set; } = 30000;
     public string WindowsPrinterName { get; set; } = "Xprinter XP-470B";
     /// <summary>Relative to the exe directory.</summary>
     public string OutputDirectory { get; set; } = "jobs";
