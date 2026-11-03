@@ -19,7 +19,12 @@ public sealed class BridgeOptions
     public bool SaveJobs { get; set; } = false;
     /// <summary>Tests only.</summary>
     public bool DisableBonjour { get; set; } = false;
-    public int[] AdvertisedResolutions { get; set; } = [203, 300];
+    /// <summary>
+    /// Empty by default: the configuration binder appends to a non-empty array
+    /// instead of replacing it. Read <see cref="Resolutions"/>.
+    /// </summary>
+    public int[] AdvertisedResolutions { get; set; } = [];
+    public int[] Resolutions => AdvertisedResolutions.Length > 0 ? [.. AdvertisedResolutions.Distinct()] : [203, 300];
     public LabelOptions Label { get; set; } = new();
     public TsplOptions Tspl { get; set; } = new();
     public MediaOptions Media { get; set; } = new();

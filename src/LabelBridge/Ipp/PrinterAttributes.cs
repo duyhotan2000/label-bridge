@@ -15,7 +15,7 @@ public static class PrinterAttributes
     ];
 
     public static string[] UrfSupported(BridgeOptions o) =>
-        ["V1.4", "CP1", "W8", "SRGB24", "RS" + string.Join("-", o.AdvertisedResolutions), "IS1", "MT1"];
+        ["V1.4", "CP1", "W8", "SRGB24", "RS" + string.Join("-", o.Resolutions), "IS1", "MT1"];
 
     public static IppGroup Build(BridgeOptions o, string printerUri, Guid uuid, JobStore store, TimeSpan uptime)
     {
@@ -54,7 +54,7 @@ public static class PrinterAttributes
         Add("compression-supported", IppTag.Keyword, "none");
 
         Add("urf-supported", IppTag.Keyword, UrfSupported(o));
-        var resolutions = o.AdvertisedResolutions.Select(r => (object)new IppResolution(r, r)).ToArray();
+        var resolutions = o.Resolutions.Select(r => (object)new IppResolution(r, r)).ToArray();
         Add("pwg-raster-document-resolution-supported", IppTag.Resolution, resolutions);
         Add("pwg-raster-document-type-supported", IppTag.Keyword, "sgray_8", "srgb_8");
         Add("printer-resolution-supported", IppTag.Resolution, resolutions);
