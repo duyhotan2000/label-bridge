@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LabelBridge/LabelBridge.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LabelBridge.Tests/LabelBridge.Tests.csproj" />
+  </Folder>
+</Solution>
