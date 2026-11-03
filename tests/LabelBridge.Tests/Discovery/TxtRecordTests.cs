@@ -49,7 +49,7 @@ public class BonjourRecordTests
     {
         const string host = "labelbridge-pc.local";
         var o = new LabelBridge.Config.BridgeOptions();
-        var profile = BonjourAdvertiser.BuildProfile(o, Guid.NewGuid(), host);
+        var profile = BonjourAdvertiser.BuildProfile(o, Guid.NewGuid(), host, [System.Net.IPAddress.Parse("192.168.1.20")]);
         using var mdns = new Makaretu.Dns.MulticastService();
         using var sd = new Makaretu.Dns.ServiceDiscovery(mdns);
         sd.Advertise(profile);
@@ -75,5 +75,47 @@ public class BonjourRecordTests
         var q = new Makaretu.Dns.Message();
         q.Questions.Add(new Makaretu.Dns.Question { Name = name, Type = type });
         return sd.NameServer.ResolveAsync(q);
+    }
+}
+
+public class AddressSelectionTests
+{
+    static BonjourAdvertiser.NicInfo Nic(string ip, bool gateway = true,
+        System.Net.NetworkInformation.NetworkInterfaceType type = System.Net.NetworkInformation.NetworkInterfaceType.Ethernet,
+        System.Net.NetworkInformation.OperationalStatus status = System.Net.NetworkInformation.OperationalStatus.Up) =>
+        new(type, status, gateway, [System.Net.IPAddress.Parse(ip)]);
+
+    [Fact]
+    public void SelectAddresses_PrefersLanIPv4WithGateway()
+    {
+        var picked = BonjourAdvertiser.SelectAddresses([
+            Nic("192.168.1.20"),
+            Nic("172.20.0.1", gateway: false),                  // Hyper-V / WSL virtual switch
+            Nic("169.254.10.10"),                               // no DHCP yet
+            Nic("fe80::1"),                                     // IPv6: server listens on IPv4 only
+            Nic("127.0.0.1", type: System.Net.NetworkInformation.NetworkInterfaceType.Loopback),
+            Nic("10.0.0.5", status: System.Net.NetworkInformation.OperationalStatus.Down),
+        ]);
+
+        Assert.Equal(["192.168.1.20"], picked.Select(a => a.ToString()));
+    }
+
+    [Fact]
+    public void SelectAddresses_NoGatewayAnywhere_FallsBackToUpIPv4()
+    {
+        var picked = BonjourAdvertiser.SelectAddresses([Nic("192.168.0.9", gateway: false), Nic("169.254.1.1", gateway: false)]);
+
+        Assert.Equal(["192.168.0.9"], picked.Select(a => a.ToString()));
+    }
+
+    [Fact]
+    public void BuildProfile_AdvertisesOnlyGivenIPv4Addresses()
+    {
+        var profile = BonjourAdvertiser.BuildProfile(new LabelBridge.Config.BridgeOptions(), Guid.NewGuid(),
+            "labelbridge-pc.local", [System.Net.IPAddress.Parse("192.168.1.20")]);
+
+        var a = Assert.Single(profile.Resources.OfType<Makaretu.Dns.AddressRecord>());
+        Assert.Equal("192.168.1.20", a.Address.ToString());
+        Assert.Equal("labelbridge-pc.local", a.Name!.ToString());
     }
 }

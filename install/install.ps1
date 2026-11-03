@@ -41,9 +41,11 @@ Get-ChildItem -Path $source -File | Where-Object { $_.Extension -ne '.ps1' } | F
 
 $exe = Join-Path $target 'LabelBridge.exe'
 if (-not $existing) {
-    sc.exe create $serviceName binPath= "`"$exe`"" start= auto DisplayName= "LabelBridge AirPrint" | Out-Null
+    sc.exe create $serviceName binPath= "`"$exe`"" start= delayed-auto DisplayName= "LabelBridge AirPrint" | Out-Null
     sc.exe description $serviceName "Shares the Xprinter XP-470B with iPhones as an AirPrint label printer." | Out-Null
 }
+# Delayed start gives Wi-Fi/DHCP time to come up after boot (Bonjour also re-advertises on network changes).
+sc.exe config $serviceName start= delayed-auto | Out-Null
 sc.exe failure $serviceName reset= 86400 actions= restart/5000/restart/5000/restart/5000 | Out-Null
 
 # Firewall: IPP (TCP 631) and Bonjour (UDP 5353), local network only.
