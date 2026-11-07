@@ -18,6 +18,13 @@ public static class InstallLayout
     public static string DefaultInstallDir =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LabelBridge");
 
+    /// <summary>
+    /// PowerShell that deletes uninstall.exe once the uninstaller process (<paramref name="pid"/>) has exited;
+    /// a running exe can't delete itself.
+    /// </summary>
+    public static string SelfDeleteCommand(int pid, string path) =>
+        $"Wait-Process -Id {pid} -ErrorAction SilentlyContinue; Remove-Item -LiteralPath '{path.Replace("'", "''")}' -Force -ErrorAction SilentlyContinue";
+
     public static IReadOnlyDictionary<string, object> UninstallEntry(string installDir, string version, long sizeKb)
     {
         var uninstall = $"\"{installDir}\\{UninstallExe}\" /uninstall";

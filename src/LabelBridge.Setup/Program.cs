@@ -61,6 +61,7 @@ static class Program
             InstallEngine.Uninstall();
             if (!silent)
                 MessageBox.Show("LabelBridge was removed.", "LabelBridge Setup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            InstallEngine.ScheduleSelfDelete();
             return 0;
         }
         catch (Exception ex)

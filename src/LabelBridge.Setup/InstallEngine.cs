@@ -59,7 +59,7 @@ static class InstallEngine
             Sc("sdset", InstallLayout.ServiceName, granted);
 
         Log.Write("Allowing users to change settings...");
-        Run("icacls.exe", SettingsPath, "/grant", "*S-1-5-32-545:M");
+        Run(SystemTool("icacls.exe"), SettingsPath, "/grant", "*S-1-5-32-545:M");
 
         Log.Write("Opening the firewall for the local network...");
         var exe = InDir(InstallLayout.ServiceExe).Replace("'", "''");
@@ -99,7 +99,7 @@ static class InstallEngine
         StopEverything();
         if (ServiceExists())
             Sc("delete", InstallLayout.ServiceName);
-        PowerShell("Get-NetFirewallRule -DisplayName 'LabelBridge IPP','LabelBridge mDNS' -ErrorAction SilentlyContinue | Remove-NetFirewallRule");
+        PowerShell("Get-NetFirewallRule -DisplayName 'LabelBridge IPP','LabelBridge mDNS' -ErrorAction SilentlyContinue | Remove-NetFirewallRule", check: false);
         using (var run = Registry.LocalMachine.OpenSubKey(InstallLayout.RunKey, writable: true))
             run?.DeleteValue(InstallLayout.RunValueName, throwOnMissingValue: false);
         if (File.Exists(ShortcutPath))
@@ -112,12 +112,22 @@ static class InstallEngine
         if (Directory.Exists(InDir("jobs")))
             Directory.Delete(InDir("jobs"), recursive: true);
 
-        // uninstall.exe can't delete itself while running; remove it shortly after we exit.
-        var uninstaller = InDir(InstallLayout.UninstallExe);
-        if (File.Exists(uninstaller))
-            Process.Start(new ProcessStartInfo("cmd.exe", $"/c ping 127.0.0.1 -n 3 >nul & del /f /q \"{uninstaller}\"")
-            { CreateNoWindow = true, UseShellExecute = false });
         Log.Write("Done. Logs and appsettings.json were kept in " + Dir);
+    }
+
+    /// <summary>
+    /// Call as the very last thing before exiting: deletes uninstall.exe once this process is gone.
+    /// </summary>
+    public static void ScheduleSelfDelete()
+    {
+        var self = Environment.ProcessPath!;
+        if (!string.Equals(Path.GetFullPath(self), Path.GetFullPath(InDir(InstallLayout.UninstallExe)), StringComparison.OrdinalIgnoreCase))
+            return;
+        var psi = new ProcessStartInfo(PowerShellExe) { CreateNoWindow = true, UseShellExecute = false };
+        foreach (var a in new[] { "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command",
+                     InstallLayout.SelfDeleteCommand(Environment.ProcessId, self) })
+            psi.ArgumentList.Add(a);
+        Process.Start(psi);
     }
 
     static void StopEverything()
@@ -148,7 +158,7 @@ static class InstallEngine
             Log.Write($"WARNING: another program is using port {port} (for example an older AirPrint tool). Stop it, or LabelBridge cannot start.");
         var publicNets = PowerShell("(Get-NetConnectionProfile | Where-Object NetworkCategory -eq 'Public').Name", check: false).Trim();
         if (publicNets.Length > 0)
-            Log.Write($"WARNING: network '{publicNets}' is set to Public, so iPhones may not find the printer. Switch it to Private in Windows Settings → Network.");
+            Log.Write($"WARNING: network '{publicNets}' is set to Public, so iPhones may not find the printer. Switch it to Private in Windows Settings -> Network.");
     }
 
     /// <summary>Starts the tray un-elevated in the logged-in user's session.</summary>
@@ -156,7 +166,7 @@ static class InstallEngine
     {
         try
         {
-            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{InDir(InstallLayout.TrayExe)}\"") { UseShellExecute = false });
+            Process.Start(new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"\"{InDir(InstallLayout.TrayExe)}\"") { UseShellExecute = false });
         }
         catch (Exception ex)
         {
@@ -167,10 +177,15 @@ static class InstallEngine
     static long DirSizeKb() =>
         new DirectoryInfo(Dir).EnumerateFiles().Sum(f => f.Length) / 1024;
 
-    static string Sc(params string[] args) => Run("sc.exe", args);
+    static readonly string PowerShellExe = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");
+
+    /// <summary>Full System32 path, so an elevated setup never runs a same-named exe from its own (e.g. Downloads) folder.</summary>
+    static string SystemTool(string exe) => Path.Combine(Environment.SystemDirectory, exe);
+
+    static string Sc(params string[] args) => Run(SystemTool("sc.exe"), args);
 
     static string PowerShell(string command, bool check = true) =>
-        Run("powershell.exe", check, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", command);
+        Run(PowerShellExe, check, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", command);
 
     static string Run(string file, params string[] args) => Run(file, true, args);
 

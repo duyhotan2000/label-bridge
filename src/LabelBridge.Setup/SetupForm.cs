@@ -21,6 +21,7 @@ sealed class SetupForm : Form
     readonly bool _upgrade;
     int _step;
     bool _done;
+    bool _installing;
 
     public SetupForm()
     {
@@ -76,6 +77,8 @@ sealed class SetupForm : Form
         _back.Click += (_, _) => Go(_step - 1);
         _next.Click += async (_, _) => await NextAsync();
         _cancel.Click += (_, _) => Close();
+        // Closing mid-install would kill the process halfway, leaving printing stopped.
+        FormClosing += (_, e) => e.Cancel = _installing;
         AcceptButton = _next;
         Go(0);
     }
@@ -100,7 +103,7 @@ sealed class SetupForm : Form
         if (_step == 2)
         {
             if (_done && _openSettings.Checked)
-                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{Path.Combine(InstallLayout.DefaultInstallDir, InstallLayout.TrayExe)}\""));
+                Process.Start(new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"\"{Path.Combine(InstallLayout.DefaultInstallDir, InstallLayout.TrayExe)}\""));
             Close();
             return;
         }
@@ -113,7 +116,12 @@ sealed class SetupForm : Form
 
         Go(2);
         _next.Enabled = _cancel.Enabled = false;
-        Log.Sink = line => BeginInvoke(() => _log.AppendText(line + Environment.NewLine));
+        _installing = true;
+        Log.Sink = line =>
+        {
+            if (!IsDisposed)
+                BeginInvoke(() => _log.AppendText(line + Environment.NewLine));
+        };
         try
         {
             await Task.Run(() => InstallEngine.Install(settings, startTray: true));
@@ -127,6 +135,7 @@ sealed class SetupForm : Form
         }
         finally
         {
+            _installing = false;
             Log.Sink = null;
             _next.Enabled = true;
             _next.Text = "Finish";
