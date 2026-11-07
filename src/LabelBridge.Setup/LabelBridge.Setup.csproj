@@ -8,6 +8,7 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>$(MSBuildThisFileDirectory)..\..\assets\LabelBridge.ico</ApplicationIcon>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>LabelBridge-Setup</AssemblyName>
   </PropertyGroup>

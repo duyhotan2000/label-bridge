@@ -7,6 +7,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>$(MSBuildThisFileDirectory)..\..\assets\LabelBridge.ico</ApplicationIcon>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>LabelBridge.Tray</AssemblyName>
   </PropertyGroup>
