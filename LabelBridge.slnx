@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/LabelBridge.Common/LabelBridge.Common.csproj" />
+    <Project Path="src/LabelBridge.Setup/LabelBridge.Setup.csproj" />
+    <Project Path="src/LabelBridge.Tray/LabelBridge.Tray.csproj" />
     <Project Path="src/LabelBridge/LabelBridge.csproj" />
   </Folder>
   <Folder Name="/tests/">

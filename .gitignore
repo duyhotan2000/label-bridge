@@ -484,3 +484,4 @@ $RECYCLE.BIN/
 /.superpowers/
 /publish/
 # Runtime output (jobs/, logs/) is written next to the exe under bin/, ignored above.
+/dist/

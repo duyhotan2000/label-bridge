@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>LabelBridge-Setup</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LabelBridge.Common\LabelBridge.Common.csproj" />
+  </ItemGroup>
+
+  <!-- build.sh passes -p:PayloadDir=<publish dir> so the installer carries the service and tray. -->
+  <ItemGroup Condition="'$(PayloadDir)' != ''">
+    <EmbeddedResource Include="$(PayloadDir)/service/LabelBridge.exe" LogicalName="payload/LabelBridge.exe" />
+    <EmbeddedResource Include="$(PayloadDir)/service/appsettings.json" LogicalName="payload/appsettings.json" />
+    <EmbeddedResource Include="$(PayloadDir)/tray/LabelBridge.Tray.exe" LogicalName="payload/LabelBridge.Tray.exe" />
+  </ItemGroup>
+
+</Project>
