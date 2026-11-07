@@ -72,3 +72,15 @@ public class SettingsFileTests
         Assert.NotEqual(0xEF, File.ReadAllBytes(_path)[0]);
     }
 }
+
+public class SettingsFileIppPortTests
+{
+    [Fact]
+    public void IppPort_ReadsOrDefaults()
+    {
+        var path = Path.Combine(Directory.CreateTempSubdirectory().FullName, "appsettings.json");
+        Assert.Equal(631, SettingsFile.IppPort(path));
+        File.WriteAllText(path, """{"Bridge":{"IppPort":8631}}""");
+        Assert.Equal(8631, SettingsFile.IppPort(path));
+    }
+}

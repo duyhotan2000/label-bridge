@@ -30,6 +30,10 @@ public static class SettingsFile
             (string?)bridge?["PrinterName"] ?? d.Name);
     }
 
+    /// <summary>The service's IPP/status-page port (default 631).</summary>
+    public static int IppPort(string path) =>
+        File.Exists(path) && Load(path)["Bridge"]?["IppPort"] is JsonValue v ? v.GetValue<int>() : 631;
+
     public static string? OutputMode(string path) =>
         File.Exists(path) ? (string?)Load(path)["Bridge"]?["Output"] : null;
 
