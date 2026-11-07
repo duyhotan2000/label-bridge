@@ -12,45 +12,68 @@ iPhone ──(AirPrint)──► Windows PC: LabelBridge ──(TSPL, port 9100)
 
 Design: `docs/superpowers/specs/2026-11-03-airprint-label-bridge-design.md`
 
-## 1. Build (on the Mac)
+## 1. Build the installer (on the Mac)
 
 ```bash
-dotnet publish src/LabelBridge -p:PublishProfile=win-x64
+./build.sh
 ```
 
-This creates `publish/win-x64/LabelBridge.exe`, a single file with .NET
-built in, plus `appsettings.json`. Copy the `publish/win-x64` folder to the
-Windows PC, then copy `install/install.ps1` and `install/uninstall.ps1` into
-that same folder.
+This produces **`dist/LabelBridge-Setup.exe`**, a single file of about 150 MB. It contains the
+LabelBridge service and the tray app, with .NET built in. Nothing else needs to be installed
+on the PC.
 
-## 2. Configure
+## 2. Install on a Windows PC
 
-Open `appsettings.json` and set at least:
+Copy `LabelBridge-Setup.exe` to the PC and double-click it. Windows asks for administrator
+permission once. If the file was downloaded from the internet, SmartScreen may say "Windows
+protected your PC"; click **More info → Run anyway** (the installer is not code-signed).
 
-| Setting | What to put |
+The wizard asks for:
+
+| Field | What to put |
 |---|---|
-| `PrinterHost` | The XP-470B's static IP address, e.g. `192.168.1.50` |
-| `WindowsPrinterName` | Only for `"Output": "windows-driver"`: the printer's name exactly as shown in Windows *Printers & scanners* |
+| Printer IP | The XP-470B's static IP address, e.g. `192.168.2.102` |
+| Printer port | `9100` (the default) |
+| AirPrint name | The name iPhones show, e.g. `XP-470B Label (Shop)`. Use a different name on each PC. |
 
-## 3. Install (on the Windows PC)
+Setup then:
+- installs to `C:\Program Files\LabelBridge`;
+- registers the `LabelBridge` service, which starts at boot and restarts if it crashes;
+- opens the firewall for the local network only;
+- adds the tray icon at login and a **LabelBridge** Start-menu entry;
+- adds an entry under **Settings → Apps → Installed apps** so it can be uninstalled.
 
-Open PowerShell **as Administrator** in the folder, then run:
+Running setup again upgrades in place and keeps your settings and printer identity.
+
+**Silent install** (for example over SSH; exit code 0 means OK, 2 means bad arguments, 1 means
+the install failed; the log is at `%TEMP%\LabelBridge-Setup.log`):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install.ps1
+Start-Process .\LabelBridge-Setup.exe -ArgumentList '/silent','/printer=192.168.2.102','/name="XP-470B Label (Shop)"' -Wait -PassThru
 ```
 
-The script:
-- installs the program to `C:\Program Files\LabelBridge`,
-- registers the `LabelBridge` service (starts automatically at boot and restarts if it crashes),
-- opens the firewall for the local network only (TCP 631, UDP 5353),
-- warns you if the network is set to *Public*.
+On an upgrade, leave out any value you want to keep. `/silent` on its own upgrades with the
+current settings. A fresh install needs `/printer=`; the port defaults to 9100 and the name to
+"LabelBridge Printer".
 
-It then shows the address of the status page. After you edit
-`C:\Program Files\LabelBridge\appsettings.json`, restart the service:
-`Restart-Service LabelBridge`.
+**Uninstall:** use *Installed apps*, or run `"C:\Program Files\LabelBridge\uninstall.exe" /uninstall [/silent]`.
+The logs and `appsettings.json` are kept.
 
-To remove it, run `.\uninstall.ps1` as Administrator.
+## 3. The tray icon
+
+The printer icon in the system tray shows whether printing is on: a green dot means running, a
+grey dot means stopped. Right-click it for:
+
+- **Settings…**: change the printer IP, the port and the AirPrint name. **Test print** sends a
+  test label using the values in the form; **Save** applies them and restarts printing.
+- **Open status page**: shows recent jobs and errors.
+- **Start printing / Stop printing**
+- **Exit (stop printing)**: stops printing and closes the icon. Printing comes back after a
+  reboot, or when you open **LabelBridge** from the Start menu and choose **Start printing**.
+
+None of these need an administrator account.
+
+> The old `install/install.ps1` scripts still work but are superseded by the installer.
 
 ## 4. Final hardware test
 

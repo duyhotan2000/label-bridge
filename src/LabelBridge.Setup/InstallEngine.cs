@@ -28,7 +28,7 @@ static class InstallEngine
 
         StopEverything();
 
-        Log.Write("Copying files…");
+        Log.Write("Copying files...");
         Directory.CreateDirectory(Dir);
         WithRetry(() => Payload.ExtractTo(Payload.ServiceExe, InDir(InstallLayout.ServiceExe)));
         WithRetry(() => Payload.ExtractTo(Payload.TrayExe, InDir(InstallLayout.TrayExe)));
@@ -46,7 +46,7 @@ static class InstallEngine
                 Log.Write($"Removed old {f}");
             }
 
-        Log.Write("Registering the Windows service…");
+        Log.Write("Registering the Windows service...");
         if (!ServiceExists())
             Sc("create", InstallLayout.ServiceName, "binPath=", $"\"{InDir(InstallLayout.ServiceExe)}\"",
                 "start=", "delayed-auto", "DisplayName=", InstallLayout.ServiceDisplayName);
@@ -58,17 +58,17 @@ static class InstallEngine
         if (granted != sddl)
             Sc("sdset", InstallLayout.ServiceName, granted);
 
-        Log.Write("Allowing users to change settings…");
+        Log.Write("Allowing users to change settings...");
         Run("icacls.exe", SettingsPath, "/grant", "*S-1-5-32-545:M");
 
-        Log.Write("Opening the firewall for the local network…");
+        Log.Write("Opening the firewall for the local network...");
         var exe = InDir(InstallLayout.ServiceExe).Replace("'", "''");
         PowerShell(
             "Get-NetFirewallRule -DisplayName 'LabelBridge IPP','LabelBridge mDNS' -ErrorAction SilentlyContinue | Remove-NetFirewallRule; " +
             $"New-NetFirewallRule -DisplayName 'LabelBridge IPP' -Direction Inbound -Protocol TCP -LocalPort {SettingsFile.IppPort(SettingsPath)} -RemoteAddress LocalSubnet -Action Allow -Program '{exe}' | Out-Null; " +
             $"New-NetFirewallRule -DisplayName 'LabelBridge mDNS' -Direction Inbound -Protocol UDP -LocalPort 5353 -RemoteAddress LocalSubnet -Action Allow -Program '{exe}' | Out-Null");
 
-        Log.Write("Adding the tray icon to Windows startup and the Start menu…");
+        Log.Write("Adding the tray icon to Windows startup and the Start menu...");
         using (var run = Registry.LocalMachine.CreateSubKey(InstallLayout.RunKey))
             run.SetValue(InstallLayout.RunValueName, $"\"{InDir(InstallLayout.TrayExe)}\"");
         var tray = InDir(InstallLayout.TrayExe).Replace("'", "''");
@@ -82,7 +82,7 @@ static class InstallEngine
 
         WarnAboutNetwork();
 
-        Log.Write("Starting printing…");
+        Log.Write("Starting printing...");
         using (var sc = new ServiceController(InstallLayout.ServiceName))
         {
             sc.Start();
@@ -124,7 +124,7 @@ static class InstallEngine
     {
         foreach (var p in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(InstallLayout.TrayExe)))
         {
-            Log.Write($"Closing tray icon (pid {p.Id})…");
+            Log.Write($"Closing tray icon (pid {p.Id})...");
             try { p.Kill(); p.WaitForExit(5000); } catch (Exception ex) { Log.Write($"  {ex.Message}"); }
         }
         if (!ServiceExists())
@@ -132,7 +132,7 @@ static class InstallEngine
         using var sc = new ServiceController(InstallLayout.ServiceName);
         if (sc.Status != ServiceControllerStatus.Stopped)
         {
-            Log.Write("Stopping the LabelBridge service…");
+            Log.Write("Stopping the LabelBridge service...");
             sc.Stop();
             sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(30));
         }
