@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\LabelBridge\LabelBridge.csproj" />
+    <ProjectReference Include="..\..\src\LabelBridge.Common\LabelBridge.Common.csproj" />
   </ItemGroup>
 
 </Project>
