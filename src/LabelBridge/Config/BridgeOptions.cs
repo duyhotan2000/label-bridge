@@ -26,6 +26,21 @@ public sealed class BridgeOptions
     public int[] AdvertisedResolutions { get; set; } = [];
     public int[] Resolutions => AdvertisedResolutions.Length > 0 ? [.. AdvertisedResolutions.Distinct()] : [203, 300];
     public LabelOptions Label { get; set; } = new();
+
+    /// <summary>
+    /// The folder for SaveJobs/file output, always inside <paramref name="baseDir"/>.
+    /// appsettings.json is writable by normal users and the service runs as SYSTEM,
+    /// so an absolute or escaping OutputDirectory falls back to "jobs".
+    /// </summary>
+    public string JobsDirectory(string baseDir)
+    {
+        var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(baseDir));
+        var fallback = Path.Combine(root, "jobs");
+        if (string.IsNullOrWhiteSpace(OutputDirectory) || Path.IsPathRooted(OutputDirectory) || OutputDirectory.Contains(':'))
+            return fallback;
+        var full = Path.GetFullPath(Path.Combine(root, OutputDirectory.Replace('\\', Path.DirectorySeparatorChar)));
+        return full.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ? full : fallback;
+    }
     public TsplOptions Tspl { get; set; } = new();
     public MediaOptions Media { get; set; } = new();
 }

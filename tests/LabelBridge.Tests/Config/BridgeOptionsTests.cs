@@ -52,3 +52,38 @@ public class BridgeOptionsTests
         Assert.Equal(new[] { 203, 300 }, new BridgeOptions().Resolutions);
     }
 }
+
+public class OutputDirectoryTests
+{
+    static readonly string Base = Path.Combine(Path.GetTempPath(), "lb-base");
+
+    [Theory]
+    [InlineData("jobs")]
+    [InlineData("sub/dir")]
+    public void JobsDirectory_RelativeInsideBase_Used(string dir)
+    {
+        var o = new LabelBridge.Config.BridgeOptions { OutputDirectory = dir };
+
+        Assert.Equal(Path.GetFullPath(Path.Combine(Base, dir)), o.JobsDirectory(Base));
+    }
+
+    [Theory]
+    [InlineData("/etc/evil")]
+    [InlineData("C:\\Windows\\System32\\evil")]
+    [InlineData("../outside")]
+    [InlineData("jobs/../../outside")]
+    public void JobsDirectory_OutsideBase_FallsBackToJobs(string dir)
+    {
+        var o = new LabelBridge.Config.BridgeOptions { OutputDirectory = dir };
+
+        Assert.Equal(Path.GetFullPath(Path.Combine(Base, "jobs")), o.JobsDirectory(Base));
+    }
+
+    [Fact]
+    public void JobsDirectory_BaseWithTrailingSeparator_KeepsRelativeDir()
+    {
+        var o = new LabelBridge.Config.BridgeOptions { OutputDirectory = "out" };
+
+        Assert.Equal(Path.GetFullPath(Path.Combine(Base, "out")), o.JobsDirectory(Base + Path.DirectorySeparatorChar));
+    }
+}

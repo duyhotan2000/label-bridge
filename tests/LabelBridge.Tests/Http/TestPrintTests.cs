@@ -5,9 +5,10 @@ public class TestPrintTests
     [Fact]
     public async Task TestPrint_FileMode_WritesLabelAndReturnsZero()
     {
-        var dir = Directory.CreateTempSubdirectory().FullName;
+        var rel = Path.Combine("test-out", Guid.NewGuid().ToString("N"));
+        var dir = Path.Combine(AppContext.BaseDirectory, rel);
 
-        var code = await TestPrint.RunAsync(["--Bridge:Output=file", $"--Bridge:OutputDirectory={dir}"]);
+        var code = await TestPrint.RunAsync(["--Bridge:Output=file", $"--Bridge:OutputDirectory={rel}"]);
 
         Assert.Equal(0, code);
         Assert.True(File.Exists(Path.Combine(dir, "test-label-label-01.png")));

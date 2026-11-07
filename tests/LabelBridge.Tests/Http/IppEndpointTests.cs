@@ -12,7 +12,9 @@ namespace LabelBridge.Tests.Http;
 
 public sealed class IppEndpointTests : IAsyncLifetime
 {
-    readonly string _dir = Directory.CreateTempSubdirectory().FullName;
+    // OutputDirectory must stay inside the app's base directory (see BridgeOptions.JobsDirectory).
+    static readonly string Rel = Path.Combine("test-out", Guid.NewGuid().ToString("N"));
+    readonly string _dir = Path.Combine(AppContext.BaseDirectory, Rel);
     WebApplication _app = null!;
     HttpClient _http = null!;
 
@@ -20,7 +22,7 @@ public sealed class IppEndpointTests : IAsyncLifetime
     {
         _app = AppBuilder.Build([
             "--Bridge:IppPort=0", "--Bridge:Output=file", "--Bridge:DisableBonjour=true",
-            $"--Bridge:OutputDirectory={_dir}",
+            $"--Bridge:OutputDirectory={Rel}",
         ]);
         await _app.StartAsync();
         var address = _app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.First();

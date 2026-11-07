@@ -21,7 +21,7 @@ public static class AppBuilder
 
         var o = builder.Configuration.GetSection("Bridge").Get<BridgeOptions>() ?? new BridgeOptions();
         var uuid = PrinterIdentity.LoadOrCreate(Path.Combine(baseDir, "printer-id.txt"));
-        var saveDir = Path.Combine(baseDir, o.OutputDirectory);
+        var saveDir = o.JobsDirectory(baseDir);
 
         builder.Services.AddSerilog(lc =>
         {
